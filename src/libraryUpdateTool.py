@@ -118,7 +118,7 @@ WIKI_MATS_ALL=  { PIECE_SABER: 100, PIECE_ARCHER: 101, PIECE_LANCER: 102, PIECE_
                  BRONZE_00: 600, BRONZE_01: 601, BRONZE_02: 602, BRONZE_03: 603, BRONZE_04: 604, BRONZE_05: 605, BRONZE_06: 606, BRONZE_07: 607, BRONZE_08: 608,\
                  \
                  SILVER_00: 700, SILVER_01: 701, SILVER_02: 702, SILVER_03: 703, SILVER_04: 704, SILVER_05: 705, SILVER_06: 706, SILVER_07: 707, SILVER_08: 708, SILVER_09: 709,\
-                 SILVER_10: 711, SILVER_11: 712, SILVER_12: 713, SILVER_13: 714, SILVER_14: 715, SILVER_15: 716, SILVER_16: 717, SILVER_17: 718, SILVER_18: 719,\
+                 SILVER_10: 710, SILVER_11: 711, SILVER_12: 712, SILVER_13: 713, SILVER_14: 714, SILVER_15: 715, SILVER_16: 716, SILVER_17: 717, SILVER_18: 718,\
                  \
                  GOLD_00: 800, GOLD_01: 801, GOLD_02: 802, GOLD_03: 803, GOLD_04: 804, GOLD_05: 805, GOLD_06: 806, GOLD_07: 807, GOLD_08: 808, GOLD_09: 809,\
                  GOLD_10: 810, GOLD_11: 811, GOLD_12: 812, GOLD_13: 813, GOLD_14: 814, GOLD_15: 815, GOLD_16: 816,\
@@ -136,11 +136,15 @@ def cleanMatsLine( line ):
         level = int(asc_num[0]) 
         line = line.strip(asc_num)
         line = line.replace('=', '')     
-        line = line.replace('Inum|', '')  
+        line = line.replace('Inum|', '')    
+        line = line.replace('inum|', '')  
         line = line.replace( '{', '')
         line = line.replace( '}', '')
         line = line.strip()
-        mats = line.split('|')
+        if ( "|" in line):
+            mats = line.split('|')
+        else:
+            mats = False
     except:
         print("Failed to Clean Material Line:")
         print(line)        
@@ -150,9 +154,9 @@ def cleanMatsLine( line ):
         mats[0] = mats[0].replace('_', ' ')
         mats[0] = WIKI_MATS_ALL[ mats[0].strip().title() ]
     except:
-        try:
+        if ( mats ):
             mats[0] = 923
-        except:
+        else:
             mats = [-1]
 
     if ( len(mats) == 2 ):
@@ -488,7 +492,7 @@ def updateAllServants( servants ):
 
 
         if ( not found_ascensions ):
-            if ( "{{ascension" in line or "{{ ascension" in line):
+            if ( "{{ascension" in line or "{{ ascension" in line or "{{Ascension" in line or "{{ Ascension" in line):
                 found_ascensions = True
                 index = addAscensionMats(wiki, index + 1, current_servant)
                 index += 1
@@ -599,10 +603,37 @@ def updateCostumeNames( servants ):
                     print ("- ( " + str( mat[1] ) + " ) " + loc.MATS_ALL[ mat[0] ] )
 
                 new_name = input("New name for this costume: ")
-
-                servant.costume_names[num-1] = new_name[:]
+                if (new_name != "n"):
+                    servant.costume_names[num-1] = new_name[:]
 
                 num += 1
+            
+            saveServants(servants)
+                
+
+def deleteServant( servants ):
+    
+    user_input = ""
+
+    while(True):
+        user_input = input("\nEnter Servant ID: ")
+        if(user_input == "q"):
+            break
+        else:
+            try:   
+                servant = servants[int(user_input)] 
+                print("\nDeleting <", servant.name,">")        
+                servants.pop( int(user_input) )
+            except:
+                print("\n\tNO SERVANT WITH THAT ID")
+                continue
+
+def saveServants( servants ):
+    try: 
+        pickle.dump ( servants, open( "servantLibrary.fgoc", "wb" ) )    
+
+    except:
+        print("\n\tFAILED TO SAVE!")
 
 
 if __name__ == '__main__':
@@ -621,27 +652,33 @@ if __name__ == '__main__':
         print("-Servant Library Tool-")
         print("----------------------")
         print(" [u] - Update All Servants")
+        print(" [s] - Save Servants")
         print(" [v] - View Servants")
         print(" [c] - Update Servant Costume Name")
+        print(" [d] - Delete Servant")
         print(" [q] - Quit")
 
         user_input = input("- ")
 
         if   (user_input == "u"):
-            updateAllServants( servants )
+            updateAllServants( servants )    
+        elif (user_input == "s"):
+            print("Saving Servants...")
+            saveServants(servants)
+            print("...Servants Saved!")
         elif (user_input == "v"):
             viewServant(servants)            
         elif (user_input == "c"):
-            updateCostumeNames(servants)
+            updateCostumeNames(servants)  
+        elif (user_input == "d"):
+            deleteServant(servants)        
         elif (user_input != "q"):
             print("Input Not Recognized")
     
-    print("Saving Servants...")
-
-    try: 
-        pickle.dump ( servants, open( "servantLibrary.fgoc", "wb" ) )    
+    user_input = input("Save Before Quitting? (y/n)- ")
+    if( user_input == "y"):
+        print("Saving Servants...")
+        saveServants(servants)
         print("...Servants Saved!")
 
-    except:
-        print("\n\tFAILED TO SAVE!")
 
